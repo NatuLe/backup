@@ -1,7 +1,7 @@
 import interactions
 from interactions import Task, IntervalTrigger,listen
 import sqlite3
-
+from interactions.ext.paginators import Paginator
 
 
 class ServerinfoBackup(interactions.Extension):
@@ -33,7 +33,25 @@ class ServerinfoBackup(interactions.Extension):
 
     @module_base.subcommand("official_members",sub_cmd_description="show the official member list at last check! ")
     async def offi_members(self,ctx:interactions.SlashContext):
-        pass
+        with sqlite3.connect('backup.db') as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT member_id FROM off_role_members')
+            off_role_member_id_list=cursor.fetchall()
+            off_role_member_name_list=[(await self.bot.fetch_user(mid[0])).name for mid in off_role_member_id_list]
+            off_role_member_name_str=", ".join(off_role_member_name_list)
+            paginator=Paginator.create_from_string(self.bot,content=f"The official members at last check are: {off_role_member_name_str}")
+            await paginator.send(ctx)
+
+    @module_base.subcommand("temporary_members",sub_cmd_description="show the temporary member list at last check! ")
+    async def tem_members(self,ctx:interactions.SlashContext):
+        with sqlite3.connect('backup.db') as conn:  
+            cursor = conn.cursor()
+            cursor.execute('SELECT member_id FROM tem_role_members')
+            tem_role_member_id_list=cursor.fetchall()
+            tem_role_member_name_list=[(await self.bot.fetch_user(mid[0])).name for mid in tem_role_member_id_list]
+            tem_role_member_name_str=", ".join(tem_role_member_name_list)
+            paginator=Paginator.create_from_string(self.bot,content=f"The temporary members at last check are: {tem_role_member_name_str}")
+            await paginator.send(ctx)
     
 
     @listen(interactions.events.MessageCreate)
@@ -65,7 +83,8 @@ class ServerinfoBackup(interactions.Extension):
         except:
             channel=await self.bot.fetch_channel(self.dm_id)
             embed=interactions.Embed(description="Role deleted!Pleaze Check!",color=interactions.Color.r)
-            await channel.send(embed=embed)
+            await channel.send(embed=embed) 
+
         
 
     def create_tables(self):
