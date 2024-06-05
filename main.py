@@ -16,6 +16,7 @@ class ServerinfoBackup(interactions.Extension):
         self.off_role_id=1181914967746818099
         self.tem_role_id=1181915800727199744
         self.dm_id=1247786071387930626
+        self.admin_id=1082957596039848006
         # initiate the db for storing off_role members'ids and tem_roles'
         
         self.create_tables()
@@ -33,22 +34,27 @@ class ServerinfoBackup(interactions.Extension):
 
     @module_base.subcommand("official_members",sub_cmd_description="show the official member list at last check! ")
     async def offi_members(self,ctx:interactions.SlashContext):
+        if ctx.author_id!=self.admin_id:
+            await ctx.send("You are not authorized to use this command!",ephemeral=True)
+            return
         with sqlite3.connect('backup.db') as conn:
             cursor = conn.cursor()
             cursor.execute('SELECT member_id FROM off_role_members')
             off_role_member_id_list=cursor.fetchall()
-            off_role_member_name_list=[(await self.bot.fetch_user(mid[0])).name for mid in off_role_member_id_list]
+            off_role_member_name_list=[(await self.bot.fetch_user(mid[0])).mention for mid in off_role_member_id_list]
             off_role_member_name_str=", ".join(off_role_member_name_list)
             paginator=Paginator.create_from_string(self.bot,content=f"The official members at last check are: {off_role_member_name_str}")
             await paginator.send(ctx)
 
     @module_base.subcommand("temporary_members",sub_cmd_description="show the temporary member list at last check! ")
     async def tem_members(self,ctx:interactions.SlashContext):
+        if ctx.author_id!=self.admin_id:
+            await ctx.send("You are not authorized to use this command!",ephemeral=True)
         with sqlite3.connect('backup.db') as conn:  
             cursor = conn.cursor()
             cursor.execute('SELECT member_id FROM tem_role_members')
             tem_role_member_id_list=cursor.fetchall()
-            tem_role_member_name_list=[(await self.bot.fetch_user(mid[0])).name for mid in tem_role_member_id_list]
+            tem_role_member_name_list=[(await self.bot.fetch_user(mid[0])).mention for mid in tem_role_member_id_list]
             tem_role_member_name_str=", ".join(tem_role_member_name_list)
             paginator=Paginator.create_from_string(self.bot,content=f"The temporary members at last check are: {tem_role_member_name_str}")
             await paginator.send(ctx)
